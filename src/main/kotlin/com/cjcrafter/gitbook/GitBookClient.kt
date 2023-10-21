@@ -7,11 +7,31 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 
-class GitBook(
+class GitBookClient(
     private val apiKey: String,
+    private val endpoint: String = GitBookApi.ENDPOINT,
     private val client: OkHttpClient = OkHttpClient(),
-) {
+): GitBookApi {
     private val gson = Gson()
+
+    override fun search(search: SearchRequest, location: SearchLocation): Result<SearchResponse> {
+        val urlBuilder = StringBuilder(location.searchEndpoint(endpoint))
+            .append("?query=${search.query}")
+        search.limit?.let { urlBuilder.append("&limit=$it") }
+        search.page?.let { urlBuilder.append("&page=$it") }
+
+        val request = Request.Builder()
+            .url(urlBuilder.toString())
+            .header("Authorization", "Bearer $apiKey")
+            .build()
+
+        return executeCall(request, SearchResponse::class.java)
+    }
+
+    override fun ask(ask: AskRequest, location: SearchLocation): Result<AskResponse> {
+        val request = buildRequest(ask, location.askEndpoint(endpoint))
+        return executeCall(request, AskResponse::class.java)
+    }
 
     private fun buildRequest(request: Any, endpoint: String): Request {
         val requestJson = gson.toJson(request)
@@ -31,49 +51,5 @@ class GitBook(
             }
         }
         return Result.failure(Exception("Request failed with response: $response"))
-    }
-
-    fun search(search: SearchRequest, location: SearchLocation = SearchLocation.BASE): Result<SearchResponse> {
-        val urlBuilder = StringBuilder(location.getSearchEndpoint())
-            .append("?query=${search.query}")
-        search.limit?.let { urlBuilder.append("&limit=$it") }
-        search.page?.let { urlBuilder.append("&page=$it") }
-
-        val request = Request.Builder()
-            .url(urlBuilder.toString())
-            .header("Authorization", "Bearer $apiKey")
-            .build()
-
-        return executeCall(request, SearchResponse::class.java)
-    }
-
-    fun ask(ask: AskRequest, location: SearchLocation = SearchLocation.BASE): Result<AskResponse> {
-        val request = buildRequest(ask, location.getAskEndpoint())
-        return executeCall(request, AskResponse::class.java)
-    }
-
-    class Builder {
-        private lateinit var apiKey: String
-        private var client: OkHttpClient = OkHttpClient()
-
-        fun apiKey(apiKey: String) = apply {
-            this.apiKey = apiKey
-        }
-
-        fun client(client: OkHttpClient) = apply {
-            this.client = client
-        }
-
-        fun build(): GitBook {
-            return GitBook(apiKey, client)
-        }
-    }
-
-    companion object {
-        const val ENDPOINT = "https://api.gitbook.com"
-
-
-        @JvmStatic
-        fun builder() = Builder()
     }
 }

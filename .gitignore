@@ -27,3 +27,6 @@ gradle.properties
 # Maven
 log/
 target/
+
+# Testing
+/src/main/kotlin/Main.kt

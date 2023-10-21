@@ -1,38 +1,31 @@
 package com.cjcrafter.gitbook
 
-/**
- * Search location
- *
- * https://developer.gitbook.com/gitbook-api/reference/search
- *
- * @constructor Create empty Search location
- */
-abstract class SearchLocation {
+sealed class SearchLocation() {
 
-    abstract fun getSearchEndpoint(): String
+    abstract fun searchEndpoint(baseEndpoint: String): String
 
-    open fun getAskEndpoint() = getSearchEndpoint() + "/ask"
+    open fun askEndpoint(baseEndpoint: String) = searchEndpoint(baseEndpoint) + "/ask"
 
-    companion object {
+    /**
+     * Searches everywhere that your API key has access to.
+     */
+    object Base : SearchLocation() {
+        override fun searchEndpoint(baseEndpoint: String) = "$baseEndpoint/v1/search"
+    }
 
-        val BASE = object : SearchLocation() {
-            override fun getSearchEndpoint() = GitBook.ENDPOINT + "/v1/search"
-        }
+    /**
+     * Searches in a specific organization.
+     *
+     * @property organizationId Your organization's id.
+     */
+    data class Organization(val organizationId: String) : SearchLocation() {
+        override fun searchEndpoint(baseEndpoint: String) = "$baseEndpoint/v1/orgs/$organizationId/search"
 
-        @JvmStatic
-        fun forOrganization(organizationId: String): SearchLocation {
-            return object : SearchLocation() {
-                override fun getSearchEndpoint() = GitBook.ENDPOINT + "/v1/orgs/$organizationId/search"
+        // Ask does not support organizations, so we throw an exception to fail fast
+        override fun askEndpoint(baseEndpoint: String) = throw IllegalStateException("Cannot use ask in organizations")
+    }
 
-                override fun getAskEndpoint() = throw IllegalStateException("Cannot use ask for organizations")
-            }
-        }
-
-        @JvmStatic
-        fun forSpace(spaceId: String): SearchLocation {
-            return object : SearchLocation() {
-                override fun getSearchEndpoint() = GitBook.ENDPOINT + "/v1/spaces/$spaceId/search"
-            }
-        }
+    data class Space(val spaceId: String) : SearchLocation() {
+        override fun searchEndpoint(baseEndpoint: String) = "$baseEndpoint/v1/spaces/$spaceId/search"
     }
 }
