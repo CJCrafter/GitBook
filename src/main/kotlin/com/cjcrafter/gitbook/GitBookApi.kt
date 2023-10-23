@@ -1,5 +1,6 @@
 package com.cjcrafter.gitbook
 
+import com.cjcrafter.gitbook.search.*
 import okhttp3.OkHttpClient
 
 interface GitBookApi {

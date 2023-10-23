@@ -1,4 +1,4 @@
-package com.cjcrafter.gitbook
+package com.cjcrafter.gitbook.search
 
 /**
  * Data class wrapping the GitBook API's response to an ask request. Since the
@@ -38,12 +38,12 @@ data class AskResponse(
         get() = answer?.followupQuestions ?: throw IllegalStateException("The wiki could not answer your question.")
 
     /**
-     * Shorthand for [Answer.pages].
+     * Shorthand for [Answer.sources].
      *
      * @throws IllegalStateException if the wiki could not answer the question.
      */
-    val pages: List<Answer.Page>
-        get() = answer?.pages ?: throw IllegalStateException("The wiki could not answer your question.")
+    val sources: List<Answer.Source>
+        get() = answer?.sources ?: throw IllegalStateException("The wiki could not answer your question.")
 
     /**
      * Data class wrapping the response from the GitBook API.
@@ -56,25 +56,28 @@ data class AskResponse(
     data class Answer(
         val text: String,
         val followupQuestions: List<String>,
-        val pages: List<Page>
+        val sources: List<Source>
     ) {
 
-        /**
-         * Data class wrapping a page used as a source for the answer. The data
-         * stored here is "a garbled mess," but can be used to pull pages from
-         * the wiki.
-         *
-         * @property page The page's id.
-         * @property revision The page's revision id.
-         * @property space The wiki space id.
-         * @property sections The section id.
-         * @constructor Instantiates a new page.
-         */
-        data class Page(
-            val page: String,
-            val revision: String,
-            val space: String,
-            val sections: List<String>
-        )
+        sealed class Source {
+
+            data class PageSource(
+                val page: String,
+                val revision: String,
+                val space: String,
+                val sections: List<String>
+            ): Source()
+
+            data class EntitySource(
+                val entityId: String,
+                val entityType: String,
+                val integration: String?
+            ) : Source()
+
+            data class CaptureSource(
+                val captureId: String,
+                val source: String
+            ) : Source()
+        }
     }
 }

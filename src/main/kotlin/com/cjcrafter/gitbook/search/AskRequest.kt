@@ -1,4 +1,4 @@
-package com.cjcrafter.gitbook
+package com.cjcrafter.gitbook.search
 
 data class AskRequest(
     val query: String,

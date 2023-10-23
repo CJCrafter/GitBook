@@ -1,6 +1,8 @@
 package com.cjcrafter.gitbook
 
-import com.google.gson.Gson
+import com.cjcrafter.gitbook.gson.SourceTypeAdapter
+import com.cjcrafter.gitbook.search.*
+import com.google.gson.GsonBuilder
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -12,7 +14,10 @@ class GitBookClient(
     private val endpoint: String = GitBookApi.ENDPOINT,
     private val client: OkHttpClient = OkHttpClient(),
 ): GitBookApi {
-    private val gson = Gson()
+
+    private val gson = GsonBuilder()
+        .registerTypeAdapter(AskResponse.Answer.Source::class.java, SourceTypeAdapter())
+        .create()
 
     override fun search(search: SearchRequest, location: SearchLocation): Result<SearchResponse> {
         val urlBuilder = StringBuilder(location.searchEndpoint(endpoint))
